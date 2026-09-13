@@ -1,6 +1,11 @@
 package com.example.drmplayer
 
 import android.os.Bundle
+import android.view.View
+import android.widget.Button
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -15,42 +20,77 @@ import androidx.media3.ui.PlayerView
 @UnstableApi
 class MainActivity : AppCompatActivity() {
     private var player: ExoPlayer? = null
-
+    private lateinit var playerView: PlayerView
+    private lateinit var inputLayout: LinearLayout
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         
-        val playerView = findViewById<PlayerView>(R.id.player_view)
+        playerView = findViewById(R.id.player_view)
+        inputLayout = findViewById(R.id.input_layout)
         
-        // Amazon MPD Link
-        val mpdUrl = "https://a189vod-dash-pv-ta-amazon.akamaized.net/iad_2/55c9/8684/3480/4811-ba41-2a1da7c44d94/382e4006-0ebc-4ecb-9614-de4e62ba290b_corrected.mpd"
-        
-        // Original converted Base64Url Keys
-        val clearKeyJson = """{"keys":[{"kty":"oct","k":"kYcA5tSUJTTe_NiqZD4GSQ","kid":"bV8gsMJVQweruPojZlOvnw"},{"kty":"oct","k":"XthsKRsWSwayfXNfUjlNbw","kid":"cdLFg8U6SiKTagv4HBwQbw"},{"kty":"oct","k":"kXO4qZk1W4adu6vUqsOo8Q","kid":"xNCTZVErRHyLzjPIrtnpYQ"}],"type":"temporary"}"""
-        val clearKeyBytes = clearKeyJson.toByteArray(Charsets.UTF_8)
+        val etMpdUrl = findViewById<EditText>(R.id.et_mpd_url)
+        val etKeys = findViewById<EditText>(R.id.et_keys)
+        val btnPlay = findViewById<Button>(R.id.btn_play)
 
-        val drmCallback = LocalMediaDrmCallback(clearKeyBytes)
-        val drmSessionManager = DefaultDrmSessionManager.Builder()
-            .setUuidAndExoMediaDrmProvider(C.CLEARKEY_UUID, FrameworkMediaDrm.DEFAULT_PROVIDER)
-            .build(drmCallback)
+        btnPlay.setOnClickListener {
+            val mpdUrl = etMpdUrl.text.toString().trim()
+            val keysJson = etKeys.text.toString().trim()
 
-        val mediaSourceFactory = DefaultMediaSourceFactory(this)
-            .setDrmSessionManagerProvider { drmSessionManager }
+            if (mpdUrl.isNotEmpty() && keysJson.isNotEmpty()) {
+                // Play button amukunathum text box-a hide pannidum
+                inputLayout.visibility = View.GONE
+                startPlayer(mpdUrl, keysJson)
+            } else {
+                Toast.makeText(this, "Link and Keys rendaiyum paste pannunga!", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
-        player = ExoPlayer.Builder(this)
-            .setMediaSourceFactory(mediaSourceFactory)
-            .build()
+    private fun startPlayer(mpdUrl: String, keysJson: String) {
+        // Pazhaiya video oditu iruntha atha stop panrathukku
+        player?.release()
 
-        playerView.player = player
+        try {
+            val clearKeyBytes = keysJson.toByteArray(Charsets.UTF_8)
+            val drmCallback = LocalMediaDrmCallback(clearKeyBytes)
+            val drmSessionManager = DefaultDrmSessionManager.Builder()
+                .setUuidAndExoMediaDrmProvider(C.CLEARKEY_UUID, FrameworkMediaDrm.DEFAULT_PROVIDER)
+                .build(drmCallback)
 
-        val mediaItem = MediaItem.Builder()
-            .setUri(mpdUrl)
-            .setDrmConfiguration(MediaItem.DrmConfiguration.Builder(C.CLEARKEY_UUID).build())
-            .build()
+            val mediaSourceFactory = DefaultMediaSourceFactory(this)
+                .setDrmSessionManagerProvider { drmSessionManager }
 
-        player?.setMediaItem(mediaItem)
-        player?.prepare()
-        player?.playWhenReady = true
+            player = ExoPlayer.Builder(this)
+                .setMediaSourceFactory(mediaSourceFactory)
+                .build()
+
+            playerView.player = player
+
+            val mediaItem = MediaItem.Builder()
+                .setUri(mpdUrl)
+                .setDrmConfiguration(MediaItem.DrmConfiguration.Builder(C.CLEARKEY_UUID).build())
+                .build()
+
+            player?.setMediaItem(mediaItem)
+            player?.prepare()
+            player?.playWhenReady = true
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+            inputLayout.visibility = View.VISIBLE
+        }
+    }
+    
+    // Back button amukuna thirumba text box UI-ku vara
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        if (inputLayout.visibility == View.GONE) {
+            player?.stop()
+            inputLayout.visibility = View.VISIBLE
+        } else {
+            super.onBackPressed()
+        }
     }
 
     override fun onDestroy() {
@@ -58,3 +98,4 @@ class MainActivity : AppCompatActivity() {
         player?.release()
     }
 }
+
