@@ -26,7 +26,7 @@ class MainActivity : AppCompatActivity() {
         val mpdUrl = "https://a189vod-dash-pv-ta-amazon.akamaized.net/iad_2/55c9/8684/3480/4811-ba41-2a1da7c44d94/382e4006-0ebc-4ecb-9614-de4e62ba290b_corrected.mpd"
         
         // Original converted Base64Url Keys
-        val clearKeyJson = """{"keys":[{"kty":"oct","k":"kYcA5tSUJTTe_NiqZD4GSQ","kid":"bV8gsMJVQwervPojZlOvnw"}],"type":"temporary"}"""
+        val clearKeyJson = """{"keys":[{"kty":"oct","k":"kYcA5tSUJTTe_NiqZD4GSQ","kid":"bV8gsMJVQweruPojZlOvnw"},{"kty":"oct","k":"XthsKRsWSwayfXNfUjlNbw","kid":"cdLFg8U6SiKTagv4HBwQbw"},{"kty":"oct","k":"kXO4qZk1W4adu6vUqsOo8Q","kid":"xNCTZVErRHyLzjPIrtnpYQ"}],"type":"temporary"}"""
         val clearKeyBytes = clearKeyJson.toByteArray(Charsets.UTF_8)
 
         val drmCallback = LocalMediaDrmCallback(clearKeyBytes)
